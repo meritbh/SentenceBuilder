@@ -50,6 +50,39 @@ public class Vocabulary {
     }
 
     /**
+     * Merges a successfully staged import into this vocabulary.
+     * Keeping imported counts separate until completion prevents a cancelled
+     * file from leaving partially learned application state behind.
+     *
+     * @param importedVocabulary completed vocabulary built from one imported file
+     */
+    void mergeFrom(Vocabulary importedVocabulary) {
+        Objects.requireNonNull(importedVocabulary, "importedVocabulary");
+
+        for (Word importedWord : importedVocabulary.wordsByText.values()) {
+            Word targetWord = getOrCreateWord(importedWord.getText());
+            targetWord.addCounts(
+                    importedWord.getOccurrenceCount(),
+                    importedWord.getSentenceStartCount(),
+                    importedWord.getSentenceEndCount());
+        }
+
+        for (Map.Entry<String, Map<String, Integer>> wordEntry
+                : importedVocabulary.followerCounts.entrySet()) {
+            Map<String, Integer> targetFollowers = followerCounts.computeIfAbsent(
+                    wordEntry.getKey(),
+                    ignored -> new LinkedHashMap<>());
+
+            for (Map.Entry<String, Integer> followerEntry : wordEntry.getValue().entrySet()) {
+                targetFollowers.merge(
+                        followerEntry.getKey(),
+                        followerEntry.getValue(),
+                        Integer::sum);
+            }
+        }
+    }
+
+    /**
      * Returns how many distinct words are stored.
      *
      * @return vocabulary size

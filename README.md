@@ -39,34 +39,30 @@ src/main/java/com/example/sentencebuilder/
 
 src/main/resources/
 ├── com/example/sentencebuilder/ → FXML resources
-└── database/schema.sql          → Initial MySQL/MariaDB schema
+└── database/                    → SQL schema resources
 ```
 
 The UI communicates with the logic layer instead of directly accessing the database. Database and other technical-service operations remain separated from JavaFX code.
 
 ## Current progress
 
-The project is still in development, but the initial scaffold now includes a first usable file-analysis interface.
+The project is still in development, but the import screen, business-logic controller, vocabulary logic, and generation logic are now beginning to operate as one flow.
 
 ### Completed groundwork
 
 - JavaFX/Maven project structure and three-layer package organization.
 - Architecture flow diagram in `docs/architecture-diagram.svg`.
-- Initial MySQL/MariaDB schema with tables for:
-  - words
-  - word-following relationships
-  - imported files
-  - generated sentences
+- Initial MySQL/MariaDB schema groundwork for words, follower relationships, imported files, and generated sentences.
 - Plain-text file validation through `ImportFileValidator`.
-- File-analysis logic through `TextFileAnalyzer` and `ImportSummary`, including line counts, progress callbacks, and cancellation support.
-- File analysis now uses the shared `ImportTokenizer` and `Vocabulary` logic so the UI can report recognized words and distinct vocabulary size using the project's current import rules.
-- In-memory business-logic models:
-  - `Word`
-  - `Sentence`
-  - `Vocabulary`
-- `ApplicationController` to keep the UI decoupled from business logic.
-- Early `SentenceGenerator` implementation that can start with a known word and append its most common learned follower.
-- Basic JavaFX file-analysis screen with:
+- Background file processing with progress updates and cancellation.
+- File processing uses the shared `ImportTokenizer` and `Vocabulary` rules and reports recognized/distinct word counts.
+- The JavaFX background import task now goes through `ApplicationController.importFile(...)` instead of creating its own analyzer.
+- Imported text is learned into the application's shared in-memory vocabulary, making it available to generation and suggestion logic during the current session.
+- `VocabularyRepository` defines the contract the future JDBC data layer can use for vocabulary, import, sentence-history, and autocomplete persistence.
+- Sentence generation supports weighted-random and most-common follower selection with configurable maximum length.
+- Business logic can rank next-word suggestions from learned follower counts.
+- Generated sentences are tracked in memory for later duplicate/history integration.
+- Basic JavaFX file-analysis screen includes:
   - text-file selection
   - file validation
   - background processing
@@ -77,13 +73,12 @@ The project is still in development, but the initial scaffold now includes a fir
 
 ### Still to be implemented or integrated
 
-- JDBC/MySQL repository implementation and database CRUD wiring.
-- Persisting processed text, vocabulary statistics, and imported-file metadata to the database.
-- Additional JavaFX screens and event handling for generation, auto-complete, reports, and word management.
-- Complete sentence-generation algorithms, including weighted/probability-based selection.
-- Auto-complete behavior.
-- Word-data viewing/editing and reporting features.
-- Generated-sentence history integration.
+- JDBC/MySQL implementation of `VocabularyRepository` / database CRUD wiring.
+- Loading persisted vocabulary at application startup.
+- Persisting imported-file metadata and learned word/follower statistics.
+- JavaFX screens/event handling for generation, auto-complete, reports, and word management.
+- Recording autocomplete user choices in memory and persistent storage.
+- Persisting generated-sentence history and duplicate-reporting data.
 - Broader automated testing and final UI/UX polish.
 
 ## Getting started
@@ -102,7 +97,7 @@ The project is still in development, but the initial scaffold now includes a fir
 
 5. Run `HelloApplication.java`.
 
-The current interface can select a plain-text file and process it with the project's tokenizer/vocabulary logic, but it does not yet write the processed data to MySQL.
+The current interface can select and process a plain-text file into the application's in-memory vocabulary while keeping the work off the JavaFX thread. MySQL persistence is not active yet because the JDBC repository implementation is still pending.
 
 ## Contributing
 
@@ -115,4 +110,4 @@ The current interface can select a plain-text file and process it with the proje
 
 ## Status
 
-In progress: file validation/analysis, tokenizer/vocabulary integration, initial business logic, database schema, and a responsive JavaFX file-analysis screen are present; database persistence and the remaining application features are still under development.
+In progress: file processing now flows through the shared application controller into the in-memory vocabulary; generation/suggestion logic and database contracts are present, while JDBC persistence and the remaining JavaFX features are still under development.

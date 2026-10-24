@@ -20,7 +20,7 @@ import javafx.stage.FileChooser;
  * File reading is delegated to a background task so the JavaFX thread stays responsive.
  */
 public class ImportController {
-    private static final String WORKER_THREAD_NAME = "sentence-builder-file-analysis";
+    private static final String WORKER_THREAD_NAME = "sentence-builder-file-import";
 
     @FXML
     private TextField filePathField;
@@ -49,7 +49,6 @@ public class ImportController {
     private TextImportTask activeTask;
     private ApplicationController applicationController;
 
-
     /**
      * Receives the business-logic controller from the application startup code.
      *
@@ -59,7 +58,7 @@ public class ImportController {
     public void setApplicationController(ApplicationController applicationController) {
         this.applicationController = applicationController;
     }
-    
+
     /**
      * Sets the initial control state and watches the path field for validation changes.
      */
@@ -94,7 +93,7 @@ public class ImportController {
     }
 
     /**
-     * Validates the selected file and starts analysis on a worker thread.
+     * Validates the selected file and starts processing on a worker thread.
      */
     @FXML
     protected void onAnalyzeFile() {
@@ -103,7 +102,13 @@ public class ImportController {
             return;
         }
 
-        TextImportTask task = new TextImportTask(sourceFile);
+        if (applicationController == null) {
+            statusLabel.setText("Application services are unavailable.");
+            summaryArea.setText("The file could not be processed because the application controller is not connected.");
+            return;
+        }
+
+        TextImportTask task = new TextImportTask(sourceFile, applicationController);
         activeTask = task;
         setBusy(true);
 
@@ -122,14 +127,14 @@ public class ImportController {
             Throwable failure = task.getException();
             finishTask();
             progressBar.setProgress(0);
-            statusLabel.setText("File analysis failed.");
+            statusLabel.setText("File processing failed.");
             summaryArea.setText(formatFailure(failure));
         });
 
         task.setOnCancelled(event -> {
             finishTask();
             progressBar.setProgress(0);
-            statusLabel.setText("File analysis cancelled.");
+            statusLabel.setText("File processing cancelled.");
         });
 
         Thread worker = new Thread(task, WORKER_THREAD_NAME);
@@ -138,7 +143,7 @@ public class ImportController {
     }
 
     /**
-     * Requests cancellation of the active file-analysis task.
+     * Requests cancellation of the active file-processing task.
      */
     @FXML
     protected void onCancelAnalysis() {
@@ -253,13 +258,13 @@ public class ImportController {
     /**
      * Produces a short error message without exposing a stack trace in the interface.
      *
-     * @param failure exception raised during file analysis
+     * @param failure exception raised during file processing
      * @return user-facing error text
      */
     private String formatFailure(Throwable failure) {
         if (failure == null || failure.getMessage() == null || failure.getMessage().isBlank()) {
-            return "The selected file could not be analyzed.";
+            return "The selected file could not be processed.";
         }
-        return "The selected file could not be analyzed: " + failure.getMessage();
+        return "The selected file could not be processed: " + failure.getMessage();
     }
 }

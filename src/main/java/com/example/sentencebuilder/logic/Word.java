@@ -68,6 +68,22 @@ public class Word {
     }
 
     /**
+     * Adds previously staged counts to this word after an import completes.
+     *
+     * @param occurrences occurrence count to add
+     * @param sentenceStarts sentence-start count to add
+     * @param sentenceEnds sentence-end count to add
+     */
+    void addCounts(long occurrences, long sentenceStarts, long sentenceEnds) {
+        if (occurrences < 0 || sentenceStarts < 0 || sentenceEnds < 0) {
+            throw new IllegalArgumentException("Word counts cannot be negative.");
+        }
+        occurrenceCount += occurrences;
+        sentenceStartCount += sentenceStarts;
+        sentenceEndCount += sentenceEnds;
+    }
+
+    /**
      * Returns how many times this word started a learned line.
      *
      * @return sentence-start count

@@ -5,19 +5,22 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 
 /**
  * Reads a text file using the project's current tokenization and vocabulary logic.
- * The vocabulary created here is temporary, so this class still does not change
- * application or database state while the persistence layer is being developed.
  */
 public class TextFileAnalyzer {
 
     /**
-     * Reads a text file, learns its words in a temporary vocabulary, and reports progress.
+     * Reads a text file into a temporary vocabulary and reports progress.
+     * This overload preserves the standalone analysis behavior used before the
+     * application controller began owning the import vocabulary.
      *
      * @param source file to read using UTF-8
      * @param cancelled callback used to stop work when the user cancels
@@ -30,11 +33,38 @@ public class TextFileAnalyzer {
             Path source,
             BooleanSupplier cancelled,
             BiConsumer<Long, Long> progress) throws IOException {
+        return analyze(source, new Vocabulary(), cancelled, progress);
+    }
+
+    /**
+     * Reads a text file into the supplied application vocabulary and reports progress.
+     * The returned counts describe only the current file even when the vocabulary
+     * already contains words learned from earlier imports.
+     *
+     * @param source file to read using UTF-8
+     * @param vocabulary application vocabulary that should learn the imported text
+     * @param cancelled callback used to stop work when the user cancels
+     * @param progress callback receiving completed lines and total lines
+     * @return immutable summary of the completed read
+     * @throws IOException if the file cannot be read
+     * @throws CancellationException if cancellation is requested
+     */
+    public ImportSummary analyze(
+            Path source,
+            Vocabulary vocabulary,
+            BooleanSupplier cancelled,
+            BiConsumer<Long, Long> progress) throws IOException {
+
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(vocabulary, "vocabulary");
+        Objects.requireNonNull(cancelled, "cancelled");
+        Objects.requireNonNull(progress, "progress");
 
         long startNanos = System.nanoTime();
         long totalLines = countLines(source, cancelled);
         long completedLines = 0;
-        Vocabulary vocabulary = new Vocabulary();
+        long tokenCount = 0;
+        Set<String> distinctWordsInFile = new HashSet<>();
 
         progress.accept(0L, totalLines);
         try (BufferedReader reader = Files.newBufferedReader(source, StandardCharsets.UTF_8)) {
@@ -42,7 +72,12 @@ public class TextFileAnalyzer {
             while ((line = reader.readLine()) != null) {
                 checkCancelled(cancelled);
 
-                // Use the shared vocabulary/tokenizer logic instead of a separate whitespace count.
+                // Count this file using the same tokenization rules used by Vocabulary.
+                var tokens = ImportTokenizer.tokenizeLine(line);
+                tokenCount += tokens.size();
+                distinctWordsInFile.addAll(tokens);
+
+                // Keep the application's shared vocabulary up to date for later features.
                 vocabulary.learnFromLine(line);
 
                 completedLines++;
@@ -50,18 +85,12 @@ public class TextFileAnalyzer {
             }
         }
 
-        long tokenCount = vocabulary.snapshotWords()
-                .values()
-                .stream()
-                .mapToLong(Word::getOccurrenceCount)
-                .sum();
-
         long elapsedMilliseconds = (System.nanoTime() - startNanos) / 1_000_000L;
         return new ImportSummary(
                 source,
                 completedLines,
                 tokenCount,
-                vocabulary.getWordCount(),
+                distinctWordsInFile.size(),
                 Files.size(source),
                 elapsedMilliseconds);
     }
