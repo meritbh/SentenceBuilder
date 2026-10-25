@@ -288,3 +288,76 @@ FILES TOUCHED WITH AI ASSISTANCE
 TIMESHEET NOTE
 
 Added generated-sentence history and learning generated text back into the vocabulary
+
+
+--------------------------------------------------------------------------------
+
+AI usage: Person 2 (Subom Sigdel), October 24, 2026
+
+Course: CS4485.0W1 Senior Design, Fall 2026, Team 25, Sentence Builder
+Work date: October 24, 2026
+Tool: Cursor (AI-assisted coding in the IDE)
+
+
+PROMPT
+
+Continue incremental Person 2 work on the Sentence Builder logic layer for October 24, 2026. Add one small import-safety change: validate that a selected input path exists, is a readable regular file, and uses the .txt extension before the application attempts to import it. Keep the validation in the logic layer, return clear user-facing error messages, and do not change the vocabulary, generation algorithms, database, or JavaFX behavior. Document the method purpose, input, and output.
+
+
+WHAT THE AI ASSISTANT DID
+
+- Added ImportFileValidator to check for a missing path, nonexistent path, non-file path, unreadable file, and unsupported file extension.
+- Returned an empty message for valid plain-text files and a specific error message for each invalid case.
+
+
+WHAT I DID (HUMAN REVIEW)
+
+- Submitted the prompt above and reviewed the validation rules and error-message wording.
+- Confirmed the change stayed limited to one import-safety improvement in the logic layer.
+
+
+FILES TOUCHED WITH AI ASSISTANCE
+
+- src/main/java/com/example/sentencebuilder/logic/ImportFileValidator.java (created)
+
+
+TIMESHEET NOTE
+
+Added validation for imported text-file paths before processing
+
+
+--------------------------------------------------------------------------------
+
+AI usage: Person 2 (Subom Sigdel), October 24, 2026
+
+Course: CS4485.0W1 Senior Design, Fall 2026, Team 25, Sentence Builder
+Work date: October 24, 2026
+Tool: Cursor (AI-assisted coding in the IDE)
+
+
+PROMPT
+
+Continue incremental Person 2 work on the Sentence Builder logic layer for October 24, 2026. Implement the next import-processing milestone: create a TextFileAnalyzer that reads a UTF-8 text file, uses the existing tokenizer and Vocabulary logic, reports completed lines and total lines through a progress callback, supports cancellation, and returns an ImportSummary containing the file statistics. Keep file resources closed with try-with-resources and do not add database persistence or new UI behavior. Document the method purpose, inputs, outputs, and possible exceptions.
+
+
+WHAT THE AI ASSISTANT DID
+
+- Added TextFileAnalyzer to count lines, read the file, learn tokens into Vocabulary, and report progress.
+- Added cancellation checks so a long import can stop promptly.
+- Returned ImportSummary data for completed lines, token count, distinct words, file size, and elapsed time.
+
+
+WHAT I DID (HUMAN REVIEW)
+
+- Submitted the prompt above and reviewed the file-reading flow, progress reporting, and cancellation behavior.
+- Confirmed the reader is closed safely and that the analyzer reuses the existing tokenizer and vocabulary logic.
+
+
+FILES TOUCHED WITH AI ASSISTANCE
+
+- src/main/java/com/example/sentencebuilder/logic/TextFileAnalyzer.java (created)
+
+
+TIMESHEET NOTE
+
+Implemented cancellable text-file analysis with progress reporting and import statistics
