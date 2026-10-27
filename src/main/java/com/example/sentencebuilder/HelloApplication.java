@@ -1,16 +1,19 @@
 package com.example.sentencebuilder;
 
 import com.example.sentencebuilder.logic.ApplicationController;
+import com.example.sentencebuilder.ui.GenerateController;
 import com.example.sentencebuilder.ui.ImportController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 /**
- * Starts the JavaFX application and displays the current Sentence Builder screen.
+ * Starts the JavaFX application and displays the Sentence Builder screens (Import and Generate tabs).
  *
  * <p>This class is the one place where the layers are assembled: it builds the
  * ApplicationController and hands it to the screen, so the UI never creates
@@ -18,7 +21,7 @@ import java.io.IOException;
  */
 public class HelloApplication extends Application {
     private static final double WINDOW_WIDTH = 720;
-    private static final double WINDOW_HEIGHT = 420;
+    private static final double WINDOW_HEIGHT = 560;
 
     /**
      * Builds the controller, loads the file-analysis view, connects the two, and
@@ -33,13 +36,31 @@ public class HelloApplication extends Application {
         // for example new ApplicationController(new WordRepository(...)).
         ApplicationController applicationController = new ApplicationController();
 
-        FXMLLoader fxmlLoader = new FXMLLoader(
+        FXMLLoader importLoader = new FXMLLoader(
                 HelloApplication.class.getResource("import-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), WINDOW_WIDTH, WINDOW_HEIGHT);
+        Tab importTab = new Tab("Import", importLoader.load());
+        importTab.setClosable(false);
 
-        // FXML creates the screen's controller itself, so hand it the logic controller afterward.
-        ImportController importController = fxmlLoader.getController();
+        FXMLLoader generateLoader = new FXMLLoader(
+                HelloApplication.class.getResource("generate-view.fxml"));
+        Tab generateTab = new Tab("Generate", generateLoader.load());
+        generateTab.setClosable(false);
+
+        // FXML creates each screen's controller itself, so hand them the logic controller afterward.
+        ImportController importController = importLoader.getController();
         importController.setApplicationController(applicationController);
+
+        GenerateController generateController = generateLoader.getController();
+        generateController.setApplicationController(applicationController);
+        // A file may have been imported since the tab was last shown.
+        generateTab.setOnSelectionChanged(event -> {
+            if (generateTab.isSelected()) {
+                generateController.refresh();
+            }
+        });
+
+        TabPane tabs = new TabPane(importTab, generateTab);
+        Scene scene = new Scene(tabs, WINDOW_WIDTH, WINDOW_HEIGHT);
 
         stage.setTitle("Sentence Builder");
         stage.setScene(scene);
