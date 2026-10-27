@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="TOP_LEFT"
+      spacing="12.0"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.sentencebuilder.ui.GenerateController">
+    <padding>
+        <Insets top="20.0" right="20.0" bottom="20.0" left="20.0"/>
+    </padding>
+
+    <Label text="Generate a sentence"
+           style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+    <Label fx:id="vocabularyLabel" wrapText="true"/>
+
+    <HBox alignment="CENTER_LEFT" spacing="8.0">
+        <Label text="Start word:"/>
+        <TextField fx:id="startWordField"
+                   promptText="Type a word from the imported text"
+                   onAction="#onGenerate"
+                   HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <HBox alignment="CENTER_LEFT" spacing="8.0">
+        <Label text="Method:"/>
+        <ComboBox fx:id="methodChoice" prefWidth="180.0"/>
+        <Label text="Max words:"/>
+        <Spinner fx:id="maxWordsSpinner"
+                 min="1" max="50" initialValue="12"
+                 editable="true"
+                 prefWidth="90.0"/>
+        <Button fx:id="generateButton"
+                text="_Generate"
+                mnemonicParsing="true"
+                defaultButton="true"
+                onAction="#onGenerate"/>
+    </HBox>
+
+    <Label fx:id="messageLabel" wrapText="true"/>
+    <Label text="Latest sentence" style="-fx-font-weight: bold;"/>
+    <Label fx:id="resultLabel"
+           wrapText="true"
+           style="-fx-font-size: 16px;"
+           minHeight="48.0"/>
+
+    <Label text="History (newest first)" style="-fx-font-weight: bold;"/>
+    <ListView fx:id="historyList" VBox.vgrow="ALWAYS"/>
+</VBox>
