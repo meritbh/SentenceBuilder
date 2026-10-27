@@ -138,7 +138,9 @@ public class SentenceGenerator {
         String bestFollower = null;
         int bestCount = -1;
         for (Map.Entry<String, Integer> entry : followers.entrySet()) {
-            if (entry.getValue() > bestCount) {
+            if (entry.getValue() > bestCount
+                    || (entry.getValue() == bestCount
+                    && (bestFollower == null || entry.getKey().compareTo(bestFollower) < 0))) {
                 bestCount = entry.getValue();
                 bestFollower = entry.getKey();
             }
@@ -156,16 +158,19 @@ public class SentenceGenerator {
      * @return selected follower text
      */
     private String pickWeightedRandomFollower(Map<String, Integer> followers) {
-        int totalWeight = 0;
+        long totalWeight = 0;
         for (int count : followers.values()) {
+            if (count < 1) {
+                throw new IllegalStateException("Follower weights must be positive.");
+            }
             totalWeight += count;
         }
-        if (totalWeight <= 0) {
+        if (totalWeight < 1 || totalWeight > Integer.MAX_VALUE) {
             throw new IllegalStateException("Follower weights must be positive.");
         }
 
-        int target = random.nextInt(totalWeight);
-        int runningTotal = 0;
+        int target = random.nextInt((int) totalWeight);
+        long runningTotal = 0;
         for (Map.Entry<String, Integer> entry : followers.entrySet()) {
             runningTotal += entry.getValue();
             if (target < runningTotal) {

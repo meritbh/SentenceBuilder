@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 
@@ -14,8 +15,8 @@ import java.util.function.BooleanSupplier;
  * Fall 2026, Team 25, Sentence Builder, starting September 18, 2026.
  * AI-assisted draft; see docs/AI-Usage-Person2-Subom-Sigdel.md.
  *
- * <p>Persistence hooks (repository field, second constructor, importFile and
- * recordSuggestionChoice stubs) added by Merit Bhusal (NetID: mxb220125) on
+ * <p>Persistence hooks (repository field, second constructor, and importFile)
+ * added by Merit Bhusal (NetID: mxb220125) on
  * October 19, 2026.
  * All earlier code in this class is unchanged.
  */
@@ -42,7 +43,8 @@ public class ApplicationController {
      */
     public ApplicationController(VocabularyRepository repository) {
         this.repository = repository;
-        this.vocabulary = new Vocabulary();
+        Vocabulary loadedVocabulary = repository == null ? null : repository.loadVocabulary();
+        this.vocabulary = loadedVocabulary == null ? new Vocabulary() : loadedVocabulary;
         this.sentenceGenerator = new SentenceGenerator();
         this.generatedSentences = new ArrayList<>();
     }
@@ -72,7 +74,8 @@ public class ApplicationController {
      * @return generated sentence
      */
     public Sentence generateSentence(String startWordText) {
-        return rememberGenerated(sentenceGenerator.generateFromStartWord(vocabulary, startWordText));
+        Sentence generated = sentenceGenerator.generateFromStartWord(vocabulary, startWordText);
+        return rememberGenerated(generated, GenerationMethod.WEIGHTED_RANDOM);
     }
 
     /**
@@ -83,8 +86,7 @@ public class ApplicationController {
      * @return generated sentence
      */
     public Sentence generateSentence(String startWordText, int maxWords) {
-        return rememberGenerated(
-                sentenceGenerator.generateFromStartWord(vocabulary, startWordText, maxWords));
+        return generateSentence(startWordText, maxWords, GenerationMethod.WEIGHTED_RANDOM);
     }
 
     /**
@@ -96,8 +98,12 @@ public class ApplicationController {
      * @return generated sentence
      */
     public Sentence generateSentence(String startWordText, int maxWords, GenerationMethod method) {
-        return rememberGenerated(
-                sentenceGenerator.generateFromStartWord(vocabulary, startWordText, maxWords, method));
+        Sentence generated = sentenceGenerator.generateFromStartWord(
+                vocabulary,
+                startWordText,
+                maxWords,
+                method);
+        return rememberGenerated(generated, method);
     }
 
     /**
@@ -118,6 +124,9 @@ public class ApplicationController {
      */
     public void learnFromSentence(Sentence sentence) {
         vocabulary.learnFromSentence(sentence);
+        if (repository != null) {
+            repository.saveVocabulary(vocabulary);
+        }
     }
 
     /**
@@ -145,6 +154,12 @@ public class ApplicationController {
             BooleanSupplier cancelled,
             BiConsumer<Long, Long> progress) throws IOException {
 
+        Objects.requireNonNull(source, "source");
+        String validationMessage = ImportFileValidator.validate(source);
+        if (!validationMessage.isEmpty()) {
+            throw new IllegalArgumentException(validationMessage);
+        }
+
         TextFileAnalyzer analyzer = new TextFileAnalyzer();
         Vocabulary stagedVocabulary = new Vocabulary();
         ImportSummary summary = analyzer.analyze(
@@ -169,17 +184,15 @@ public class ApplicationController {
      * autocomplete. Unknown words are added; known pairs have their user-choice
      * count increased.
      *
-     * <p>STUB. Intended steps, to be filled in as autocomplete persistence is
-     * integrated: update the in-memory vocabulary, then call
-     * repository.recordUserChoice(previousWordText, chosenWordText) when the
-     * repository is not null.
-     *
      * @param previousWordText completed word before the cursor
      * @param chosenWordText word the user chose or typed next
-     * @throws UnsupportedOperationException until the steps above are implemented
      */
     public void recordSuggestionChoice(String previousWordText, String chosenWordText) {
-        throw new UnsupportedOperationException("recordSuggestionChoice is not implemented yet.");
+        vocabulary.recordUserChoice(previousWordText, chosenWordText);
+        if (repository != null) {
+            repository.recordUserChoice(previousWordText, chosenWordText);
+            repository.saveVocabulary(vocabulary);
+        }
     }
 
     /**
@@ -188,8 +201,13 @@ public class ApplicationController {
      * @param sentence newly generated sentence
      * @return the same sentence for the UI layer
      */
-    private Sentence rememberGenerated(Sentence sentence) {
+    private Sentence rememberGenerated(Sentence sentence, GenerationMethod method) {
+        Objects.requireNonNull(sentence, "sentence");
+        Objects.requireNonNull(method, "method");
         generatedSentences.add(sentence);
+        if (repository != null) {
+            repository.saveGeneratedSentence(sentence, method);
+        }
         return sentence;
     }
 }

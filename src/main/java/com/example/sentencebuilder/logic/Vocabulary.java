@@ -131,6 +131,22 @@ public class Vocabulary {
     }
 
     /**
+     * Records a word chosen after another word in autocomplete.
+     * The chosen word is added when it has not been learned from an import yet.
+     *
+     * @param previousWordText completed word before the cursor
+     * @param chosenWordText word selected or entered by the user
+     */
+    public void recordUserChoice(String previousWordText, String chosenWordText) {
+        String previous = normalizeRequired(previousWordText, "previousWordText");
+        String chosen = normalizeRequired(chosenWordText, "chosenWordText");
+        getOrCreateWord(previous);
+        Word chosenWord = getOrCreateWord(chosen);
+        chosenWord.recordOccurrence();
+        recordFollower(previous, chosen);
+    }
+
+    /**
      * Returns next-word suggestions ranked by follower count, then alphabetically.
      * Suggestions are offered only after a complete previous word, matching
      * the assignment rule that autocomplete starts after space, period, or comma.
@@ -175,7 +191,9 @@ public class Vocabulary {
         String bestFollower = null;
         int bestCount = -1;
         for (Map.Entry<String, Integer> entry : followers.entrySet()) {
-            if (entry.getValue() > bestCount) {
+            if (entry.getValue() > bestCount
+                    || (entry.getValue() == bestCount
+                    && (bestFollower == null || entry.getKey().compareTo(bestFollower) < 0))) {
                 bestCount = entry.getValue();
                 bestFollower = entry.getKey();
             }
@@ -208,5 +226,21 @@ public class Vocabulary {
                 ignored -> new LinkedHashMap<>());
         int updatedCount = followers.getOrDefault(toWordText, 0) + 1;
         followers.put(toWordText, updatedCount);
+    }
+
+    /**
+     * Normalizes a required user-entered word and reports a useful argument error.
+     *
+     * @param rawText word supplied by a caller
+     * @param argumentName argument name used in the error message
+     * @return normalized nonblank word text
+     */
+    private String normalizeRequired(String rawText, String argumentName) {
+        Objects.requireNonNull(rawText, argumentName);
+        String normalized = Word.normalize(rawText);
+        if (normalized.isEmpty()) {
+            throw new IllegalArgumentException(argumentName + " cannot be blank.");
+        }
+        return normalized;
     }
 }

@@ -361,3 +361,65 @@ FILES TOUCHED WITH AI ASSISTANCE
 TIMESHEET NOTE
 
 Implemented cancellable text-file analysis with progress reporting and import statistics
+
+--------------------------------------------------------------------------------
+
+AI usage: Person 2 (Subom Sigdel), October 27, 2026
+
+Course: CS4485.0W1 Senior Design, Fall 2026, Team 25, Sentence Builder
+Work date: October 27, 2026
+Tool: Codex (AI-assisted coding in the IDE)
+
+
+PROMPT
+
+Continue Person 2 business-logic work after the generation-screen update. Complete
+the unfinished ApplicationController integration while preserving the existing
+three-layer format. Keep repository access behind VocabularyRepository, implement
+autocomplete choice recording, load saved vocabulary when a repository is supplied,
+persist generated sentences and learned generated text, validate imported files at
+the business boundary, and keep function comments, bounded loops, initialized loop
+variables, resource handling, and exception behavior clear. Document how to use the
+logic layer for future UI work.
+
+
+WHAT THE AI ASSISTANT DID
+
+- Completed ApplicationController's suggestion-choice workflow instead of leaving
+  recordSuggestionChoice as an UnsupportedOperationException stub.
+- Loaded an existing repository vocabulary when one is supplied, while retaining
+  an in-memory default for the current application.
+- Persisted generated sentences, learned generated text, imported vocabulary, and
+  autocomplete choices through the existing repository interface.
+- Added import validation at the controller boundary so non-text or unreadable
+  paths are rejected before analysis.
+- Added Vocabulary.recordUserChoice and deterministic alphabetical tie-breaking for
+  equally common generation followers.
+- Used a long total for weighted follower counts and rejected invalid weights before
+  choosing a random follower.
+- Added this usage note and the companion logic-layer usage guide.
+
+
+WHAT I DID (HUMAN REVIEW)
+
+- Reviewed that JavaFX classes still call ApplicationController rather than the
+  vocabulary or repository directly.
+- Reviewed the controller, vocabulary, sentence, and generator functions for clear
+  inputs/outputs, valid loop bounds, initialized counters, and null/blank input
+  handling.
+- Verified the text reader still uses try-with-resources and that the changes remain
+  inside the logic layer and its repository contract.
+
+
+FILES TOUCHED WITH AI ASSISTANCE
+
+- src/main/java/com/example/sentencebuilder/logic/ApplicationController.java
+- src/main/java/com/example/sentencebuilder/logic/Vocabulary.java
+- src/main/java/com/example/sentencebuilder/logic/SentenceGenerator.java
+- docs/AI-Usage-Person2-Subom-Sigdel.md
+- docs/Person2-Logic-Usage.md
+
+
+TIMESHEET NOTE
+
+Completed controller and repository integration for the Sentence Builder business logic
